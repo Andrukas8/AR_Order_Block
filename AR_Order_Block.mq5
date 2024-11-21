@@ -17,12 +17,16 @@
 #property indicator_color1  clrLimeGreen
 #property indicator_style1  STYLE_SOLID
 #property indicator_width1  3
+
 //--- plot DN
 #property indicator_label2  "Down"
 #property indicator_type2   DRAW_ARROW
 #property indicator_color2  clrTomato
 #property indicator_style2  STYLE_SOLID
 #property indicator_width2  3
+
+// -- indicator inputs
+input int LOOKBACK = 1000; // How many candles to lookback
 
 //--- indicator buffers
 double BufferUP[];
@@ -38,14 +42,14 @@ int OnInit()
    SetIndexBuffer(1,BufferDN,INDICATOR_DATA);
 //--- setting a code from the Wingdings charset as the property of PLOT_ARROW
 
-   PlotIndexSetInteger(0,PLOT_ARROW,225); // Arrow up
-   PlotIndexSetInteger(1,PLOT_ARROW,226); // Arrow Down
+   PlotIndexSetInteger(0,PLOT_ARROW,159); // Arrow up
+   PlotIndexSetInteger(1,PLOT_ARROW,159); // Arrow Down
 
-   PlotIndexSetInteger(0,PLOT_ARROW_SHIFT,50);
-   PlotIndexSetInteger(1,PLOT_ARROW_SHIFT,-50);
+   PlotIndexSetInteger(0,PLOT_ARROW_SHIFT,40);
+   PlotIndexSetInteger(1,PLOT_ARROW_SHIFT,-40);
 
 //--- setting indicator parameters
-   IndicatorSetString(INDICATOR_SHORTNAME,"SquatBar");
+   IndicatorSetString(INDICATOR_SHORTNAME,"OrderBlock");
    IndicatorSetInteger(INDICATOR_DIGITS,Digits());
 //--- setting buffer arrays as timeseries
    ArraySetAsSeries(BufferUP,true);
@@ -72,24 +76,15 @@ int OnCalculate(const int rates_total,
   {
 //--- Checking the minimum number of bars for calculation
 
-
-// Removing rectangles
-//string Name;
-//for(int i = ObjectsTotal(0,0) -1 ; i >= 0; i--)
-//  {
-//   Name = ObjectName(0,i);
-//   if(StringSubstr(Name, 0, 6) == "DN_OB_")
-//      ObjectDelete(0,Name);
-//   if(StringSubstr(Name, 0, 6) == "UP_OB_")
-//      ObjectDelete(0,Name);
-//  }
-
-
    if(rates_total<3)
       return 0;
 
 //--- Checking and calculating the number of bars
-   int limit=rates_total-prev_calculated;
+
+// int limit=rates_total-prev_calculated;
+   int limit = rates_total - MathMax(LOOKBACK, prev_calculated);
+
+
    if(limit>1)
      {
       limit=rates_total-5;
@@ -106,6 +101,7 @@ int OnCalculate(const int rates_total,
 //--- Calculating the indicator
 
    for(int i=limit-5; i>=2 && !IsStopped(); i--)
+
      {
 
       bool strike_up=false;
@@ -117,11 +113,13 @@ int OnCalculate(const int rates_total,
             low[i] < low[i+1]
             && low[i] < low[i-1]
             && high[i] < low[i-2]
+            && high[i] > open[i-1]
+            && close[i-1] > low[i-2]
          )
          ||
          (
             low[i+1] < low[i+2]
-            && low[i+1] < low[i]
+            // && low[i+1] < low[i]
             && high[i+1] > low[i-1]
             && high[i] < low[i-2]
          )
@@ -136,11 +134,13 @@ int OnCalculate(const int rates_total,
             high[i] > high[i+1]
             && high[i] > high[i-1]
             && low[i] > high[i-2]
+            && low[i] < close[i-1]
+            && open[i-1] < high[i-2]
          )
          ||
          (
             high[i+1] > high[i+2]
-            && high[i+1] > high[i]
+            // && high[i+1] > high[i]
             && low[i+1] < high[i-1]
             && low[i] > high[i-2]
          )
@@ -228,7 +228,7 @@ int OnCalculate(const int rates_total,
      }
 
 //--- return value of prev_calculated for next call
-   return(rates_total);
+   return rates_total;
 
   }
 
@@ -247,3 +247,4 @@ void OnDeinit(const int reason)
      }
   }
 //+------------------------------------------------------------------+
+
