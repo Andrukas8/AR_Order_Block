@@ -110,15 +110,15 @@ int OnCalculate(const int rates_total,
             low[i] < low[i+1]
             && low[i] < low[i-1]
             && high[i] < low[i-2]
-            && high[i] > open[i-1]
+            && open[i-1] < high[i]
             && close[i-1] > low[i-2]
          )
          ||
          (
             low[i+1] < low[i+2]
-            // && low[i+1] < low[i]
+            && low[i+1] < low[i]
             && high[i+1] > low[i-1]
-            && high[i] < low[i-2]
+            && high[i] < high[i-2]
          )
       )
          strike_up = true; // GREEN
@@ -128,13 +128,14 @@ int OnCalculate(const int rates_total,
             high[i] > high[i+1]
             && high[i] > high[i-1]
             && low[i] > high[i-2]
-            && low[i] < close[i-1]
-            && open[i-1] < high[i-2]
+            && open[i-1] > low[i]
+            && close[i-1] > high[i-2]
+                     
          )
          ||
          (
             high[i+1] > high[i+2]
-            // && high[i+1] > high[i]
+            && high[i+1] > high[i]
             && low[i+1] < high[i-1]
             && low[i] > high[i-2]
          )
