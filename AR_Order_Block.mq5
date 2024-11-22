@@ -129,7 +129,7 @@ int OnCalculate(const int rates_total,
             && high[i] > high[i-1]
             && low[i] > high[i-2]
             && open[i-1] > low[i]
-            && close[i-1] > high[i-2]
+            && close[i-1] < high[i-2]
                      
          )
          ||
