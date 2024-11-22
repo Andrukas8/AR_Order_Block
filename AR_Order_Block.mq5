@@ -81,9 +81,7 @@ int OnCalculate(const int rates_total,
 
 //--- Checking and calculating the number of bars
 
-// int limit=rates_total-prev_calculated;
    int limit = rates_total - MathMax(LOOKBACK, prev_calculated);
-
 
    if(limit>1)
      {
@@ -100,13 +98,10 @@ int OnCalculate(const int rates_total,
 
 //--- Calculating the indicator
 
-   for(int i=limit-5; i>=2 && !IsStopped(); i--)
-
+   for(int i=limit; i>1 && !IsStopped(); i--)
      {
-
       bool strike_up=false;
       bool strike_dn=false;
-
 
       if(
          (
@@ -124,10 +119,7 @@ int OnCalculate(const int rates_total,
             && high[i] < low[i-2]
          )
       )
-        {
          strike_up = true; // GREEN
-
-        }
 
       if(
          (
@@ -146,33 +138,28 @@ int OnCalculate(const int rates_total,
          )
 
       )
-        {
          strike_dn = true; // RED
-        }
 
 
-      for(int j=i-2;j>0;j--)
-        {
+      for(int j=i-2; j>0; j--)
          if(low[i] < high[j])
            {
             strike_dn = false;
             break;
            }
-        }
 
-      for(int j=i-2;j>0;j--)
-        {
+
+      for(int j=i-2; j>0; j--)
          if(high[i] > low[j])
            {
             strike_up = false;
             break;
            }
-        }
 
       if(strike_up)
         {
          BufferUP[i]=close[i];
-         ObjectCreate(0,"UP_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0],low[i]);
+         ObjectCreate(0,"UP_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
          ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
          //--- set the style of rectangle lines
@@ -200,8 +187,7 @@ int OnCalculate(const int rates_total,
       if(strike_dn)
         {
          BufferDN[i]=close[i];
-         ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0],low[i]);
-         ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0],low[i]);
+         ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
          ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
          //--- set the style of rectangle lines
