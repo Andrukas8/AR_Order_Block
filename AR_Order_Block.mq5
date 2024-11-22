@@ -26,7 +26,9 @@
 #property indicator_width2  3
 
 // -- indicator inputs
-input int LOOKBACK = 1000; // How many candles to lookback
+input int LOOKBACK = 1000;                // How many candles to lookback
+input color bearishColor = clrDarkGreen;  // Color of Bearish OB Rectangle
+input color bullishColor = clrDarkRed;    // Color of Bullish OB Rectangle
 
 //--- indicator buffers
 double BufferUP[];
@@ -109,7 +111,7 @@ int OnCalculate(const int rates_total,
             && low[i] < low[i-1]
             && high[i] < low[i-2]
             && high[i] > open[i-1]
-            && close[i-1] > low[i-2]
+            && close[i-1] < low[i-2]
          )
          ||
          (
@@ -127,7 +129,7 @@ int OnCalculate(const int rates_total,
             && high[i] > high[i-1]
             && low[i] > high[i-2]
             && low[i] < close[i-1]
-            && open[i-1] < high[i-2]
+            && open[i-1] > high[i-2]
          )
          ||
          (
@@ -161,7 +163,7 @@ int OnCalculate(const int rates_total,
          BufferUP[i]=close[i];
          ObjectCreate(0,"UP_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
-         ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,clrDarkGreen);
+         ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,bearishColor);
          //--- set the style of rectangle lines
          ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
          //--- set width of the rectangle lines
@@ -189,7 +191,7 @@ int OnCalculate(const int rates_total,
          BufferDN[i]=close[i];
          ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
-         ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,clrDarkRed);
+         ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,bullishColor);
          //--- set the style of rectangle lines
          ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
          //--- set width of the rectangle lines
@@ -233,4 +235,3 @@ void OnDeinit(const int reason)
      }
   }
 //+------------------------------------------------------------------+
-
