@@ -111,7 +111,7 @@ int OnCalculate(const int rates_total,
             && low[i] < low[i-1]
             && high[i] < low[i-2]
             && high[i] > open[i-1]
-            && close[i-1] < low[i-2]
+            && close[i-1] > low[i-2]
          )
          ||
          (
@@ -129,7 +129,7 @@ int OnCalculate(const int rates_total,
             && high[i] > high[i-1]
             && low[i] > high[i-2]
             && low[i] < close[i-1]
-            && open[i-1] > high[i-2]
+            && open[i-1] < high[i-2]
          )
          ||
          (
@@ -144,7 +144,7 @@ int OnCalculate(const int rates_total,
 
 
       for(int j=i-2; j>0; j--)
-         if(low[i] < high[j])
+         if(low[i] < high[j] && j < i - 2)
            {
             strike_dn = false;
             break;
@@ -152,7 +152,7 @@ int OnCalculate(const int rates_total,
 
 
       for(int j=i-2; j>0; j--)
-         if(high[i] > low[j])
+         if(high[i] > low[j] && j < i - 2)
            {
             strike_up = false;
             break;
@@ -234,4 +234,6 @@ void OnDeinit(const int reason)
       ObjectsDeleteAll(0,"UP_OB_",-1,OBJ_RECTANGLE);
      }
   }
+//+------------------------------------------------------------------+
+
 //+------------------------------------------------------------------+
