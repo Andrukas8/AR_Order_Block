@@ -79,7 +79,7 @@ int OnCalculate(const int rates_total,
                 const int &spread[])
   {
 //--- Checking the minimum number of bars for calculation
-
+   
    if(rates_total<3)
       return 0;
 
@@ -324,6 +324,9 @@ void OnDeinit(const int reason)
       reason == 2
       || reason == 3
       || reason == 4
+      || reason == 5
+      || reason == 6
+      || reason == 7
    )
      {
       ObjectsDeleteAll(0,"DN_OB_",-1,OBJ_RECTANGLE);
