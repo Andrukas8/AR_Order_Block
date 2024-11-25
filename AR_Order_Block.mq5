@@ -26,9 +26,12 @@
 #property indicator_width2  3
 
 // -- indicator inputs
-input int LOOKBACK = 1000;                // How many candles to lookback
-input color bearishColor = clrDarkGreen;  // Color of Bearish OB Rectangle
-input color bullishColor = clrDarkRed;    // Color of Bullish OB Rectangle
+input bool fvgToggle = true;                  // Add Fair Value Gap to the chart
+input int LOOKBACK = 1000;                    // How many candles to lookback
+input color obBearishColor = clrDarkGreen;    // Color of Bearish OB Rectangle
+input color obBullishColor = clrDarkRed;      // Color of Bullish OB Rectangle
+input color fvgColor = clrDarkSlateGray;      // Color of Bullish OB Rectangle
+
 
 //--- indicator buffers
 double BufferUP[];
@@ -56,7 +59,6 @@ int OnInit()
 //--- setting buffer arrays as timeseries
    ArraySetAsSeries(BufferUP,true);
    ArraySetAsSeries(BufferDN,true);
-
 
 //---
    return(INIT_SUCCEEDED);
@@ -105,6 +107,7 @@ int OnCalculate(const int rates_total,
       bool strike_up=false;
       bool strike_dn=false;
 
+      // OB
       if(
          (
             low[i] < low[i+1]
@@ -130,7 +133,7 @@ int OnCalculate(const int rates_total,
             && low[i] > high[i-2]
             && open[i-1] > low[i]
             && close[i-1] < high[i-2]
-                     
+
          )
          ||
          (
@@ -143,14 +146,13 @@ int OnCalculate(const int rates_total,
       )
          strike_dn = true; // RED
 
-
+      // OB mitigation check
       for(int j=i-2; j>0; j--)
          if(low[i] < high[j] && j < i - 2)
            {
             strike_dn = false;
             break;
            }
-
 
       for(int j=i-2; j>0; j--)
          if(high[i] > low[j] && j < i - 2)
@@ -159,12 +161,13 @@ int OnCalculate(const int rates_total,
             break;
            }
 
+
       if(strike_up)
         {
          BufferUP[i]=close[i];
          ObjectCreate(0,"UP_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
-         ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,bearishColor);
+         ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,obBearishColor);
          //--- set the style of rectangle lines
          ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
          //--- set width of the rectangle lines
@@ -192,7 +195,7 @@ int OnCalculate(const int rates_total,
          BufferDN[i]=close[i];
          ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
          //--- set rectangle color
-         ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,bullishColor);
+         ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,obBullishColor);
          //--- set the style of rectangle lines
          ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
          //--- set width of the rectangle lines
@@ -214,7 +217,99 @@ int OnCalculate(const int rates_total,
         }
       else
          BufferDN[i]=EMPTY_VALUE;
-     }
+
+
+      if(fvgToggle)
+        {
+         bool fvg_bull = false;
+         bool fvg_bear = false;
+
+         // FVG
+         if(
+            high[i+1] < low[i-1]
+            && close[i] > low[i-1]
+            && open[i] < high[i+1]
+         )
+            fvg_bull = true;
+
+
+         if(
+            low[i+1] > high[i-1]
+            && close[i] < high[i-1]
+            && open[i] > low[i+1]
+         )
+            fvg_bear = true;
+
+         // FVG mitigation check bullish
+         for(int j=i-2; j>0; j--)
+            if(low[i-1] > low[j]  && j < i - 2)
+              {
+               fvg_bull = false;
+               break;
+              }
+
+         // FVG mitigation check bearish
+         for(int j=i-2; j>0; j--)
+            if(high[i-1] < high[j] && j < i - 2)
+              {
+               fvg_bear = false;
+               break;
+              }
+
+         // Drawing FVG
+
+         if(fvg_bull)
+           {
+            ObjectCreate(0,"FVG_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i+1],time[0] + (1000 * PeriodSeconds()),low[i-1]);
+            //--- set rectangle color
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_COLOR,fvgColor);
+            //--- set the style of rectangle lines
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
+            //--- set width of the rectangle lines
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_WIDTH,2);
+            //--- enable (true) or disable (false) the mode of filling the rectangle
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_FILL,true);
+            //--- display in the foreground (false) or background (true)
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_BACK,true);
+            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
+            //--- when creating a graphical object using ObjectCreate function, the object cannot be
+            //--- highlighted and moved by default. Inside this method, selection parameter
+            //--- is true by default making it possible to highlight and move the object
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTED,false);
+            //--- hide (true) or display (false) graphical object name in the object list
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_HIDDEN,true);
+            //--- set the priority for receiving the event of a mouse click in the chart
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_ZORDER,0);
+           }
+
+         if(fvg_bear)
+           {
+            ObjectCreate(0,"FVG_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],low[i+1],time[0] + (1000 * PeriodSeconds()),high[i-1]);
+            //--- set rectangle color
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_COLOR,fvgColor);
+            //--- set the style of rectangle lines
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
+            //--- set width of the rectangle lines
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_WIDTH,2);
+            //--- enable (true) or disable (false) the mode of filling the rectangle
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_FILL,true);
+            //--- display in the foreground (false) or background (true)
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_BACK,true);
+            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
+            //--- when creating a graphical object using ObjectCreate function, the object cannot be
+            //--- highlighted and moved by default. Inside this method, selection parameter
+            //--- is true by default making it possible to highlight and move the object
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTED,false);
+            //--- hide (true) or display (false) graphical object name in the object list
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_HIDDEN,true);
+            //--- set the priority for receiving the event of a mouse click in the chart
+            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_ZORDER,0);
+           }
+        } // if fvg
+
+     } // end of for loop
 
 //--- return value of prev_calculated for next call
    return rates_total;
@@ -233,6 +328,7 @@ void OnDeinit(const int reason)
      {
       ObjectsDeleteAll(0,"DN_OB_",-1,OBJ_RECTANGLE);
       ObjectsDeleteAll(0,"UP_OB_",-1,OBJ_RECTANGLE);
+      ObjectsDeleteAll(0,"FVG_",-1,OBJ_RECTANGLE);
      }
   }
 //+------------------------------------------------------------------+
