@@ -61,6 +61,10 @@ int OnInit()
    ArraySetAsSeries(BufferDN,true);
 
 //---
+
+   if(!removeRectangles())
+      Print(__FUNCTION__, " Failed...");
+
    return(INIT_SUCCEEDED);
   }
 
@@ -79,7 +83,8 @@ int OnCalculate(const int rates_total,
                 const int &spread[])
   {
 //--- Checking the minimum number of bars for calculation
-   
+
+
    if(rates_total<3)
       return 0;
 
@@ -329,11 +334,24 @@ void OnDeinit(const int reason)
       || reason == 7
    )
      {
-      ObjectsDeleteAll(0,"DN_OB_",-1,OBJ_RECTANGLE);
-      ObjectsDeleteAll(0,"UP_OB_",-1,OBJ_RECTANGLE);
-      ObjectsDeleteAll(0,"FVG_",-1,OBJ_RECTANGLE);
+      if(!removeRectangles())
+         Print(__FUNCTION__, " Failed...");
      }
   }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool removeRectangles()
+  {
+   ObjectsDeleteAll(0,"DN_OB_",-1,OBJ_RECTANGLE);
+   ObjectsDeleteAll(0,"UP_OB_",-1,OBJ_RECTANGLE);
+   ObjectsDeleteAll(0,"FVG_",-1,OBJ_RECTANGLE);
+   return true;
+  }
+
+
+
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
