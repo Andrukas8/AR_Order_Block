@@ -32,7 +32,6 @@ input color obBearishColor = clrDarkGreen;    // Color of Bearish OB Rectangle
 input color obBullishColor = clrDarkRed;      // Color of Bullish OB Rectangle
 input color fvgColor = clrDarkSlateGray;      // Color of Bullish OB Rectangle
 
-
 //--- indicator buffers
 double BufferUP[];
 double BufferDN[];
@@ -94,7 +93,7 @@ int OnCalculate(const int rates_total,
 
    if(limit>1)
      {
-      limit=rates_total-5;
+      // limit=rates_total-5;
       ArrayInitialize(BufferUP,EMPTY_VALUE);
       ArrayInitialize(BufferDN,EMPTY_VALUE);
      }
@@ -325,18 +324,8 @@ int OnCalculate(const int rates_total,
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
   {
-   if(
-      reason == 2
-      || reason == 3
-      || reason == 4
-      || reason == 5
-      || reason == 6
-      || reason == 7
-   )
-     {
-      if(!removeRectangles())
-         Print(__FUNCTION__, " Failed...");
-     }
+   if(!removeRectangles())
+      Print(__FUNCTION__, " Failed...");
   }
 
 //+------------------------------------------------------------------+
