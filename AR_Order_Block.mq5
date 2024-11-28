@@ -26,8 +26,8 @@
 #property indicator_width2  3
 
 // -- indicator inputs
-input bool rectanglesToggle = true;           // Add Fair Value Gap to the chart
-input bool fvgToggle = true;                  // Add Fair Value Gap to the chart
+input bool rectanglesToggle = true;           // Add Order Block Rectangles
+input bool fvgToggle = true;                  // Add Fair Value Gap Rectangles
 input int LOOKBACK = 1000;                    // How many candles to lookback
 input color obBearishColor = clrDarkGreen;    // Color of Bearish OB Rectangle
 input color obBullishColor = clrDarkRed;      // Color of Bullish OB Rectangle
