@@ -85,6 +85,8 @@ int OnCalculate(const int rates_total,
 //--- Checking the minimum number of bars for calculation
 
 
+
+
    if(rates_total<3)
       return 0;
 
@@ -166,72 +168,29 @@ int OnCalculate(const int rates_total,
             break;
            }
 
-
+      // OB check
       if(strike_up)
-        {
          BufferUP[i]=close[i];
-         if(rectanglesToggle)
-           {
-            ObjectCreate(0,"UP_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
-            //--- set rectangle color
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_COLOR,obBearishColor);
-            //--- set the style of rectangle lines
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
-            //--- set width of the rectangle lines
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_WIDTH,2);
-            //--- enable (true) or disable (false) the mode of filling the rectangle
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_FILL,true);
-            //--- display in the foreground (false) or background (true)
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_BACK,true);
-            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
-            //--- when creating a graphical object using ObjectCreate function, the object cannot be
-            //--- highlighted and moved by default. Inside this method, selection parameter
-            //--- is true by default making it possible to highlight and move the object
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_SELECTED,false);
-            //--- hide (true) or display (false) graphical object name in the object list
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_HIDDEN,true);
-            //--- set the priority for receiving the event of a mouse click in the chart
-            ObjectSetInteger(0,"UP_OB_"+IntegerToString(i),OBJPROP_ZORDER,0);
-            //--- successful execution
-           }
-
-        }
       else
          BufferUP[i]=EMPTY_VALUE;
       if(strike_dn)
-        {
          BufferDN[i]=close[i];
-         if(rectanglesToggle)
-           {
-            ObjectCreate(0,"DN_OB_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i],time[0] + (1000 * PeriodSeconds()),low[i]);
-            //--- set rectangle color
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_COLOR,obBullishColor);
-            //--- set the style of rectangle lines
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
-            //--- set width of the rectangle lines
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_WIDTH,2);
-            //--- enable (true) or disable (false) the mode of filling the rectangle
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_FILL,true);
-            //--- display in the foreground (false) or background (true)
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_BACK,true);
-            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
-            //--- when creating a graphical object using ObjectCreate function, the object cannot be
-            //--- highlighted and moved by default. Inside this method, selection parameter
-            //--- is true by default making it possible to highlight and move the object
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_SELECTED,false);
-            //--- hide (true) or display (false) graphical object name in the object list
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_HIDDEN,true);
-            //--- set the priority for receiving the event of a mouse click in the chart
-            ObjectSetInteger(0,"DN_OB_"+IntegerToString(i),OBJPROP_ZORDER,0);
-           }
-
-        }
       else
          BufferDN[i]=EMPTY_VALUE;
 
+      // Building OB rectangles
+      if(rectanglesToggle)
+        {
+         if(strike_dn)
+            if(!buildRectandgls("DN_OB_",i,time[i],high[i],time[0], low[i],obBullishColor))
+               Print(__FUNCTION__," Failed...");
 
+         if(strike_up)
+            if(!buildRectandgls("UP_OB_",i,time[i],high[i],time[0], low[i],obBearishColor))
+               Print(__FUNCTION__," Failed...");
+        }
+
+      // FVG
       if(fvgToggle)
         {
          bool fvg_bull = false;
@@ -272,54 +231,13 @@ int OnCalculate(const int rates_total,
          // Drawing FVG
 
          if(fvg_bull)
-           {
-            ObjectCreate(0,"FVG_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],high[i+1],time[0] + (1000 * PeriodSeconds()),low[i-1]);
-            //--- set rectangle color
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_COLOR,fvgColor);
-            //--- set the style of rectangle lines
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
-            //--- set width of the rectangle lines
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_WIDTH,2);
-            //--- enable (true) or disable (false) the mode of filling the rectangle
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_FILL,true);
-            //--- display in the foreground (false) or background (true)
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_BACK,true);
-            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
-            //--- when creating a graphical object using ObjectCreate function, the object cannot be
-            //--- highlighted and moved by default. Inside this method, selection parameter
-            //--- is true by default making it possible to highlight and move the object
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTED,false);
-            //--- hide (true) or display (false) graphical object name in the object list
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_HIDDEN,true);
-            //--- set the priority for receiving the event of a mouse click in the chart
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_ZORDER,0);
-           }
+            if(!buildRectandgls("FVG_",i,time[i],high[i+1],time[0], low[i-1],fvgColor))
+               Print(__FUNCTION__," Failed...");
 
          if(fvg_bear)
-           {
-            ObjectCreate(0,"FVG_"+IntegerToString(i),OBJ_RECTANGLE,0,time[i],low[i+1],time[0] + (1000 * PeriodSeconds()),high[i-1]);
-            //--- set rectangle color
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_COLOR,fvgColor);
-            //--- set the style of rectangle lines
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_STYLE,STYLE_DASH);
-            //--- set width of the rectangle lines
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_WIDTH,2);
-            //--- enable (true) or disable (false) the mode of filling the rectangle
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_FILL,true);
-            //--- display in the foreground (false) or background (true)
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_BACK,true);
-            //--- enable (true) or disable (false) the mode of highlighting the rectangle for moving
-            //--- when creating a graphical object using ObjectCreate function, the object cannot be
-            //--- highlighted and moved by default. Inside this method, selection parameter
-            //--- is true by default making it possible to highlight and move the object
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTABLE,false);
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_SELECTED,false);
-            //--- hide (true) or display (false) graphical object name in the object list
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_HIDDEN,true);
-            //--- set the priority for receiving the event of a mouse click in the chart
-            ObjectSetInteger(0,"FVG_"+IntegerToString(i),OBJPROP_ZORDER,0);
-           }
+            if(!buildRectandgls("FVG_",i,time[i],low[i+1],time[0], high[i-1],fvgColor))
+               Print(__FUNCTION__," Failed...");
+
         } // if fvg
 
      } // end of for loop
@@ -329,6 +247,26 @@ int OnCalculate(const int rates_total,
 
   }
 
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+bool buildRectandgls(string namePrefix,int i, datetime time1, double side1, datetime time0, double side2, color fillColor)
+  {
+   string rectName = namePrefix +IntegerToString(i);
+   datetime time2 = time0+(1000 * PeriodSeconds());
+   ObjectCreate(0,rectName,OBJ_RECTANGLE,0,time1,side1,time2,side2);
+   ObjectSetInteger(0,rectName,OBJPROP_COLOR,fillColor);
+   ObjectSetInteger(0,rectName,OBJPROP_STYLE,STYLE_DASH);
+   ObjectSetInteger(0,rectName,OBJPROP_WIDTH,2);
+   ObjectSetInteger(0,rectName,OBJPROP_FILL,true);
+   ObjectSetInteger(0,rectName,OBJPROP_BACK,true);
+   ObjectSetInteger(0,rectName,OBJPROP_SELECTABLE,false);
+   ObjectSetInteger(0,rectName,OBJPROP_SELECTED,false);
+   ObjectSetInteger(0,rectName,OBJPROP_HIDDEN,true);
+   ObjectSetInteger(0,rectName,OBJPROP_ZORDER,0);
+   return true;
+  }
 
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
