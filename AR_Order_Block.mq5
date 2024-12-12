@@ -5,8 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Andrukas8"
 #property link      "https://github.com/Andrukas8/AR_Order_Block"
-#property version   "1.02"
-#property indicator_chart_window
+#property version   "1.1"
 
 #property indicator_chart_window
 #property indicator_buffers 2
@@ -28,7 +27,7 @@
 // -- indicator inputs
 input bool rectanglesToggle = true;           // Add Order Block Rectangles
 input bool fvgToggle = true;                  // Add Fair Value Gap Rectangles
-input int LOOKBACK = 1000;                    // How many candles to lookback
+input int LOOKBACK = 2000;                    // How many candles to lookback
 input color obBearishColor = clrDarkGreen;    // Color of Bearish OB Rectangle
 input color obBullishColor = clrDarkRed;      // Color of Bullish OB Rectangle
 input color fvgColor = clrDarkSlateGray;      // Color of Bullish OB Rectangle
@@ -84,164 +83,163 @@ int OnCalculate(const int rates_total,
   {
 //--- Checking the minimum number of bars for calculation
 
+//Print(rates_total," ", prev_calculated);
 
-
-
-   if(rates_total<3)
-      return 0;
-
-//--- Checking and calculating the number of bars
-
-   int limit = rates_total - MathMax(LOOKBACK, prev_calculated);
-
-   if(limit>1)
+   if(rates_total > prev_calculated)
      {
-      // limit=rates_total-5;
+      if(!removeRectangles())
+         Print(__FUNCTION__, " Failed...");
+
+      if(rates_total<3)
+         return 0;
+
+      //--- Checking and calculating the number of bars
+
       ArrayInitialize(BufferUP,EMPTY_VALUE);
       ArrayInitialize(BufferDN,EMPTY_VALUE);
-     }
-//--- Indexing arrays as timeseries
-   ArraySetAsSeries(low,true);
-   ArraySetAsSeries(high,true);
-   ArraySetAsSeries(close,true);
-   ArraySetAsSeries(open,true);
-   ArraySetAsSeries(time,true);
 
-//--- Calculating the indicator
+      //--- Indexing arrays as timeseries
+      ArraySetAsSeries(low,true);
+      ArraySetAsSeries(high,true);
+      ArraySetAsSeries(close,true);
+      ArraySetAsSeries(open,true);
+      ArraySetAsSeries(time,true);
 
-   for(int i=limit; i>1 && !IsStopped(); i--)
-     {
-      bool strike_up=false;
-      bool strike_dn=false;
+      //--- Calculating the indicator
 
-      // OB
-      if(
-         (
-            low[i] < low[i+1]
-            && low[i] < low[i-1]
-            && high[i] < low[i-2]
-            && open[i-1] < high[i]
-            && close[i-1] > low[i-2]
-         )
-         ||
-         (
-            low[i+1] < low[i+2]
-            && low[i+1] < low[i]
-            && high[i+1] > low[i-1]
-            && high[i] < high[i-2]
-         )
-      )
-         strike_up = true; // GREEN
-
-      if(
-         (
-            high[i] > high[i+1]
-            && high[i] > high[i-1]
-            && low[i] > high[i-2]
-            && open[i-1] > low[i]
-            && close[i-1] < high[i-2]
-
-         )
-         ||
-         (
-            high[i+1] > high[i+2]
-            && high[i+1] > high[i]
-            && low[i+1] < high[i-1]
-            && low[i] > high[i-2]
-         )
-
-      )
-         strike_dn = true; // RED
-
-      // OB mitigation check
-      for(int j=i-2; j>0; j--)
-         if(low[i] < high[j] && j < i - 2)
-           {
-            strike_dn = false;
-            break;
-           }
-
-      for(int j=i-2; j>0; j--)
-         if(high[i] > low[j] && j < i - 2)
-           {
-            strike_up = false;
-            break;
-           }
-
-      // OB check
-      if(strike_up)
-         BufferUP[i]=close[i];
-      else
-         BufferUP[i]=EMPTY_VALUE;
-      if(strike_dn)
-         BufferDN[i]=close[i];
-      else
-         BufferDN[i]=EMPTY_VALUE;
-
-      // Building OB rectangles
-      if(rectanglesToggle)
+      for(int i=LOOKBACK; i>1 && !IsStopped(); i--)
         {
-         if(strike_dn)
-            if(!buildRectandgls("DN_OB_",i,time[i],high[i],time[0], low[i],obBullishColor))
-               Print(__FUNCTION__," Failed...");
+         bool strike_up=false;
+         bool strike_dn=false;
 
+         // OB
+         if(
+            (
+               low[i] < low[i+1]
+               && low[i] < low[i-1]
+               && high[i] < low[i-2]
+               && open[i-1] < high[i]
+               && close[i-1] > low[i-2]
+            )
+            ||
+            (
+               low[i+1] < low[i+2]
+               && low[i+1] < low[i]
+               && high[i+1] > low[i-1]
+               && high[i] < high[i-2]
+            )
+         )
+            strike_up = true; // GREEN
+
+         if(
+            (
+               high[i] > high[i+1]
+               && high[i] > high[i-1]
+               && low[i] > high[i-2]
+               && open[i-1] > low[i]
+               && close[i-1] < high[i-2]
+            )
+            ||
+            (
+               high[i+1] > high[i+2]
+               && high[i+1] > high[i]
+               && low[i+1] < high[i-1]
+               && low[i] > high[i-2]
+            )
+
+         )
+            strike_dn = true; // RED
+
+         // OB mitigation check
+         for(int j=i-2; j>0; j--)
+            if(low[i] < high[j] && j < i - 2)
+              {
+               strike_dn = false;
+               break;
+              }
+
+         for(int j=i-2; j>0; j--)
+            if(high[i] > low[j] && j < i - 2)
+              {
+               strike_up = false;
+               break;
+              }
+
+         // OB check
          if(strike_up)
-            if(!buildRectandgls("UP_OB_",i,time[i],high[i],time[0], low[i],obBearishColor))
-               Print(__FUNCTION__," Failed...");
-        }
+            BufferUP[i]=close[i];
+         else
+            BufferUP[i]=EMPTY_VALUE;
+         if(strike_dn)
+            BufferDN[i]=close[i];
+         else
+            BufferDN[i]=EMPTY_VALUE;
 
-      // FVG
-      if(fvgToggle)
-        {
-         bool fvg_bull = false;
-         bool fvg_bear = false;
+         // Building OB rectangles
+         if(rectanglesToggle)
+           {
+            if(strike_dn)
+               if(!buildRectandgls("DN_OB_",i,time[i],high[i],time[0], low[i],obBullishColor))
+                  Print(__FUNCTION__," Failed...");
+
+            if(strike_up)
+               if(!buildRectandgls("UP_OB_",i,time[i],high[i],time[0], low[i],obBearishColor))
+                  Print(__FUNCTION__," Failed...");
+           }
 
          // FVG
-         if(
-            high[i+1] < low[i-1]
-            && close[i] > low[i-1]
-            && open[i] < high[i+1]
-         )
-            fvg_bull = true;
+         if(fvgToggle)
+           {
+            bool fvg_bull = false;
+            bool fvg_bear = false;
+
+            // FVG
+            if(
+               high[i+1] < low[i-1]
+               && close[i] > low[i-1]
+               && open[i] < high[i+1]
+            )
+               fvg_bull = true;
 
 
-         if(
-            low[i+1] > high[i-1]
-            && close[i] < high[i-1]
-            && open[i] > low[i+1]
-         )
-            fvg_bear = true;
+            if(
+               low[i+1] > high[i-1]
+               && close[i] < high[i-1]
+               && open[i] > low[i+1]
+            )
+               fvg_bear = true;
 
-         // FVG mitigation check bullish
-         for(int j=i-2; j>0; j--)
-            if(low[i-1] > low[j]  && j < i - 2)
-              {
-               fvg_bull = false;
-               break;
-              }
+            // FVG mitigation check bullish
+            for(int j=i-2; j>0; j--)
+               if(low[i-1] > low[j]  && j < i - 2)
+                 {
+                  fvg_bull = false;
+                  break;
+                 }
 
-         // FVG mitigation check bearish
-         for(int j=i-2; j>0; j--)
-            if(high[i-1] < high[j] && j < i - 2)
-              {
-               fvg_bear = false;
-               break;
-              }
+            // FVG mitigation check bearish
+            for(int j=i-2; j>0; j--)
+               if(high[i-1] < high[j] && j < i - 2)
+                 {
+                  fvg_bear = false;
+                  break;
+                 }
 
-         // Drawing FVG
+            // Drawing FVG
 
-         if(fvg_bull)
-            if(!buildRectandgls("FVG_",i,time[i],high[i+1],time[0], low[i-1],fvgColor))
-               Print(__FUNCTION__," Failed...");
+            if(fvg_bull)
+               if(!buildRectandgls("FVG_",i,time[i],high[i+1],time[0], low[i-1],fvgColor))
+                  Print(__FUNCTION__," Failed...");
 
-         if(fvg_bear)
-            if(!buildRectandgls("FVG_",i,time[i],low[i+1],time[0], high[i-1],fvgColor))
-               Print(__FUNCTION__," Failed...");
+            if(fvg_bear)
+               if(!buildRectandgls("FVG_",i,time[i],low[i+1],time[0], high[i-1],fvgColor))
+                  Print(__FUNCTION__," Failed...");
 
-        } // if fvg
+           } // if fvg
 
-     } // end of for loop
+        } // end of for loop
 
+     }
 //--- return value of prev_calculated for next call
    return rates_total;
 
@@ -254,7 +252,7 @@ int OnCalculate(const int rates_total,
 bool buildRectandgls(string namePrefix,int i, datetime time1, double side1, datetime time0, double side2, color fillColor)
   {
    string rectName = namePrefix +IntegerToString(i);
-   datetime time2 = time0+(1000 * PeriodSeconds());
+   datetime time2 = time0+(500 * PeriodSeconds());
    ObjectCreate(0,rectName,OBJ_RECTANGLE,0,time1,side1,time2,side2);
    ObjectSetInteger(0,rectName,OBJPROP_COLOR,fillColor);
    ObjectSetInteger(0,rectName,OBJPROP_STYLE,STYLE_DASH);
@@ -271,7 +269,6 @@ bool buildRectandgls(string namePrefix,int i, datetime time1, double side1, date
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
   {
-   Print(reason);
    if(!removeRectangles())
       Print(__FUNCTION__, " Failed...");
   }
@@ -286,8 +283,6 @@ bool removeRectangles()
    ObjectsDeleteAll(0,"FVG_",-1,OBJ_RECTANGLE);
    return true;
   }
-
-
 
 //+------------------------------------------------------------------+
 
